@@ -1,0 +1,22 @@
+# Swift / Xcode
+.build/
+*.o
+*.d
+*.swp
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+
+# 一時ファイル
+/tmp/
+
+# アプリバンドルとZip（Releasesで配布するので不要）
+*.app
+*.zip
