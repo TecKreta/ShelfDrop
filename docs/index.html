@@ -878,15 +878,24 @@
       <div class="step reveal">
         <div class="step-num">3</div>
         <div class="step-body">
-          <h3>「開けない」と言われたら右クリックで開く</h3>
-          <p>macOS Gatekeeperによる確認が出ることがあります。その場合は <strong>右クリック → 開く → それでも開く</strong> で起動できます。</p>
-          <p style="margin-top:12px;">またはターミナルで以下を実行（コピーしてペーストしてください）：</p>
+          <h3>「確認できません」と出たら — セキュリティ設定から許可する</h3>
+          <p>macOS Gatekeeperのセキュリティ確認が出ます。以下の手順で許可してください：</p>
+          <p style="margin-top:16px;font-weight:600;color:var(--text);">✅ 方法A（おすすめ）: システム設定から許可</p>
+          <p>1. ダイアログの「キャンセル」を押す<br>
+            2. 🍎 メニュー →「<strong>システム設定</strong>」を開く<br>
+            3.「<strong>プライバシーとセキュリティ</strong>」を選ぶ<br>
+            4. 下にスクロールすると「<em>"ShelfDrop"はブロックされました</em>」という表示があるので「<strong>このまま開く</strong>」をクリック<br>
+            5. パスワードを入力して許可 → 完了！</p>
+          <p style="margin-top:16px;font-weight:600;color:var(--text);">🖥️ 方法B: ターミナルで一発解除</p>
+          <p style="margin-bottom:4px;">アプリ上で右クリック →「新規ターミナルタブでフォルダに移動」→ 以下を貼り付けてEnter：</p>
           <code
             onclick="navigator.clipboard.writeText('xattr -rd com.apple.quarantine /Applications/ShelfDrop.app') && this.textContent = '✅ コピーしました！' && setTimeout(()=>this.textContent='xattr -rd com.apple.quarantine /Applications/ShelfDrop.app', 2000)">xattr -rd com.apple.quarantine /Applications/ShelfDrop.app</code>
+          <p style="margin-top:8px;font-size:13px;">※ これはmacOSの標準的なセキュリティ機能です。どちらの方法も安全に回避できます。</p>
         </div>
       </div>
     </div>
   </section>
+
 
   <!-- Download CTA -->
   <section class="download" id="download">
