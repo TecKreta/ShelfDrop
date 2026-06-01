@@ -1,4 +1,5 @@
 import Cocoa
+import ShelfDropCore
 import SwiftUI
 
 /// アプリケーションデリゲート
@@ -125,15 +126,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     private var dragShiftMonitor: Any?
     
-    // Shiftダブルタップ検知用 (ファイルシェルフ)
-    private var lastShiftPressTime: TimeInterval = 0
-    private var shiftDoubleTapGlobalMonitor: Any?
-    private var shiftDoubleTapLocalMonitor: Any?
+    // Shiftトリプルタップ検知用 (ファイルシェルフ)
+    private var shiftTapDetector = KeyTapDetector(requiredTapCount: 3, minimumInterval: 0.04, maximumInterval: 0.25)
+    private var shiftTripleTapGlobalMonitor: Any?
+    private var shiftTripleTapLocalMonitor: Any?
     
-    // Controlダブルタップ検知用 (プロンプトシェルフ)
-    private var lastControlPressTime: TimeInterval = 0
-    private var controlDoubleTapGlobalMonitor: Any?
-    private var controlDoubleTapLocalMonitor: Any?
+    // Controlトリプルタップ検知用 (プロンプトシェルフ)
+    private var controlTapDetector = KeyTapDetector(requiredTapCount: 3, minimumInterval: 0.04, maximumInterval: 0.25)
+    private var controlTripleTapGlobalMonitor: Any?
+    private var controlTripleTapLocalMonitor: Any?
     
     // MARK: - イベント監視
     
@@ -178,58 +179,56 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         
-        // Shiftキーのダブルタップ検知（グローバル）
-        shiftDoubleTapGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.flagsChanged]) { [weak self] event in
-            self?.handlePossibleShiftDoubleTap(event)
+        // Shiftキーのトリプルタップ検知（グローバル）
+        shiftTripleTapGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.flagsChanged]) { [weak self] event in
+            self?.handlePossibleShiftTripleTap(event)
         }
         
-        // Shiftキーのダブルタップ検知（ローカル: アプリにフォーカスがある時）
-        shiftDoubleTapLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: [.flagsChanged]) { [weak self] event in
-            self?.handlePossibleShiftDoubleTap(event)
+        // Shiftキーのトリプルタップ検知（ローカル: アプリにフォーカスがある時）
+        shiftTripleTapLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: [.flagsChanged]) { [weak self] event in
+            self?.handlePossibleShiftTripleTap(event)
             return event
         }
         
-        // Controlキーのダブルタップ検知（グローバル）
-        controlDoubleTapGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.flagsChanged]) { [weak self] event in
-            self?.handlePossibleControlDoubleTap(event)
+        // Controlキーのトリプルタップ検知（グローバル）
+        controlTripleTapGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.flagsChanged]) { [weak self] event in
+            self?.handlePossibleControlTripleTap(event)
         }
         
-        // Controlキーのダブルタップ検知（ローカル）
-        controlDoubleTapLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: [.flagsChanged]) { [weak self] event in
-            self?.handlePossibleControlDoubleTap(event)
+        // Controlキーのトリプルタップ検知（ローカル）
+        controlTripleTapLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: [.flagsChanged]) { [weak self] event in
+            self?.handlePossibleControlTripleTap(event)
             return event
         }
     }
     
-    private func handlePossibleShiftDoubleTap(_ event: NSEvent) {
+    private func handlePossibleShiftTripleTap(_ event: NSEvent) {
         let isOnlyShiftPressed = event.modifierFlags.intersection(.deviceIndependentFlagsMask) == .shift
-        if isOnlyShiftPressed {
-            let currentTime = Date().timeIntervalSinceReferenceDate
-            let timeSinceLastPress = currentTime - lastShiftPressTime
-            if timeSinceLastPress > 0.05 && timeSinceLastPress < 0.35 {
-                lastShiftPressTime = 0
-                DispatchQueue.main.async { [weak self] in
-                    self?.toggleActiveUI(for: .file)
-                }
-            } else {
-                lastShiftPressTime = currentTime
+        guard isOnlyShiftPressed else {
+            shiftTapDetector.reset()
+            return
+        }
+
+        let currentTime = Date().timeIntervalSinceReferenceDate
+        if shiftTapDetector.registerTap(at: currentTime) {
+            DispatchQueue.main.async { [weak self] in
+                self?.toggleActiveUI(for: .file)
             }
         }
     }
     
-    private func handlePossibleControlDoubleTap(_ event: NSEvent) {
+    private func handlePossibleControlTripleTap(_ event: NSEvent) {
         // Controlのみが押されたか判定
         let isOnlyControlPressed = event.modifierFlags.intersection(.deviceIndependentFlagsMask) == .control
-        if isOnlyControlPressed {
-            let currentTime = Date().timeIntervalSinceReferenceDate
-            let timeSinceLastPress = currentTime - lastControlPressTime
-            if timeSinceLastPress > 0.05 && timeSinceLastPress < 0.35 {
-                lastControlPressTime = 0
-                DispatchQueue.main.async { [weak self] in
-                    self?.toggleActiveUI(for: .prompt)
-                }
-            } else {
-                lastControlPressTime = currentTime
+        guard isOnlyControlPressed else {
+            controlTapDetector.reset()
+            return
+        }
+
+        let currentTime = Date().timeIntervalSinceReferenceDate
+        if controlTapDetector.registerTap(at: currentTime) {
+            DispatchQueue.main.async { [weak self] in
+                self?.toggleActiveUI(for: .prompt)
             }
         }
     }
@@ -393,11 +392,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if let dragShiftMonitor = dragShiftMonitor {
             NSEvent.removeMonitor(dragShiftMonitor)
         }
-        if let globalShift = shiftDoubleTapGlobalMonitor {
+        if let globalShift = shiftTripleTapGlobalMonitor {
             NSEvent.removeMonitor(globalShift)
         }
-        if let localShift = shiftDoubleTapLocalMonitor {
+        if let localShift = shiftTripleTapLocalMonitor {
             NSEvent.removeMonitor(localShift)
+        }
+        if let globalControl = controlTripleTapGlobalMonitor {
+            NSEvent.removeMonitor(globalControl)
+        }
+        if let localControl = controlTripleTapLocalMonitor {
+            NSEvent.removeMonitor(localControl)
         }
     }
     
