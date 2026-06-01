@@ -203,14 +203,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func handlePossibleShiftTripleTap(_ event: NSEvent) {
-        let isOnlyShiftPressed = event.modifierFlags.intersection(.deviceIndependentFlagsMask) == .shift
-        guard isOnlyShiftPressed else {
-            shiftTapDetector.reset()
-            return
-        }
-
+        let activeModifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         let currentTime = Date().timeIntervalSinceReferenceDate
-        if shiftTapDetector.registerTap(at: currentTime) {
+        if shiftTapDetector.registerModifierChange(
+            isTargetOnly: activeModifiers == .shift,
+            hasAnyModifier: !activeModifiers.isEmpty,
+            at: currentTime
+        ) {
             DispatchQueue.main.async { [weak self] in
                 self?.toggleActiveUI(for: .file)
             }
@@ -219,14 +218,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     private func handlePossibleControlTripleTap(_ event: NSEvent) {
         // Controlのみが押されたか判定
-        let isOnlyControlPressed = event.modifierFlags.intersection(.deviceIndependentFlagsMask) == .control
-        guard isOnlyControlPressed else {
-            controlTapDetector.reset()
-            return
-        }
-
+        let activeModifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         let currentTime = Date().timeIntervalSinceReferenceDate
-        if controlTapDetector.registerTap(at: currentTime) {
+        if controlTapDetector.registerModifierChange(
+            isTargetOnly: activeModifiers == .control,
+            hasAnyModifier: !activeModifiers.isEmpty,
+            at: currentTime
+        ) {
             DispatchQueue.main.async { [weak self] in
                 self?.toggleActiveUI(for: .prompt)
             }

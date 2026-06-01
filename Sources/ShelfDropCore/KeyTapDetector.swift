@@ -36,6 +36,22 @@ public struct KeyTapDetector {
         return false
     }
 
+    public mutating func registerModifierChange(
+        isTargetOnly: Bool,
+        hasAnyModifier: Bool,
+        at time: TimeInterval
+    ) -> Bool {
+        if isTargetOnly {
+            return registerTap(at: time)
+        }
+
+        if hasAnyModifier {
+            reset()
+        }
+
+        return false
+    }
+
     public mutating func reset() {
         lastTapTime = nil
         tapCount = 0

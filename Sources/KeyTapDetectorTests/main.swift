@@ -43,8 +43,30 @@ func resetsWhenTapIntervalIsTooFast() {
     expect(detector.registerTap(at: 10.22) == true, "third valid tap after reset should trigger")
 }
 
+func ignoresModifierReleaseEventsBetweenTargetTaps() {
+    var detector = KeyTapDetector(requiredTapCount: 3, minimumInterval: 0.04, maximumInterval: 0.25)
+
+    expect(detector.registerModifierChange(isTargetOnly: true, hasAnyModifier: true, at: 10.00) == false, "first press should not trigger")
+    expect(detector.registerModifierChange(isTargetOnly: false, hasAnyModifier: false, at: 10.05) == false, "release should be ignored")
+    expect(detector.registerModifierChange(isTargetOnly: true, hasAnyModifier: true, at: 10.10) == false, "second press should not trigger")
+    expect(detector.registerModifierChange(isTargetOnly: false, hasAnyModifier: false, at: 10.15) == false, "release should be ignored")
+    expect(detector.registerModifierChange(isTargetOnly: true, hasAnyModifier: true, at: 10.20) == true, "third press should trigger")
+}
+
+func resetsWhenAnotherModifierCombinationAppears() {
+    var detector = KeyTapDetector(requiredTapCount: 3, minimumInterval: 0.04, maximumInterval: 0.25)
+
+    expect(detector.registerModifierChange(isTargetOnly: true, hasAnyModifier: true, at: 10.00) == false, "first press should not trigger")
+    expect(detector.registerModifierChange(isTargetOnly: false, hasAnyModifier: true, at: 10.10) == false, "other modifier combination should reset")
+    expect(detector.registerModifierChange(isTargetOnly: true, hasAnyModifier: true, at: 10.20) == false, "first press after reset should not trigger")
+    expect(detector.registerModifierChange(isTargetOnly: true, hasAnyModifier: true, at: 10.30) == false, "second press after reset should not trigger")
+    expect(detector.registerModifierChange(isTargetOnly: true, hasAnyModifier: true, at: 10.40) == true, "third press after reset should trigger")
+}
+
 doesNotTriggerAfterOnlyTwoFastTaps()
 triggersOnThirdFastTapAndResets()
 resetsWhenTapIntervalIsTooSlow()
 resetsWhenTapIntervalIsTooFast()
+ignoresModifierReleaseEventsBetweenTargetTaps()
+resetsWhenAnotherModifierCombinationAppears()
 print("KeyTapDetectorTests passed")
